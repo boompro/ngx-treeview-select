@@ -1,5 +1,6 @@
 import { isBoolean, isNil, isString } from 'lodash';
 import { TreeviewHelper } from './treeview-helper';
+var roots = [];
 var TreeviewItem = /** @class */ (function () {
     function TreeviewItem(item, autoCorrectChecked) {
         if (autoCorrectChecked === void 0) { autoCorrectChecked = false; }
@@ -9,7 +10,10 @@ var TreeviewItem = /** @class */ (function () {
         this.internalChecked = true;
         this.internalCollapsed = false;
         this.internalEdit = false;
+        this.internalCreated = true;
         this.isRoot = false;
+        this.internalSelected = false;
+        this.internalActive = false;
         if (isNil(item)) {
             throw new Error('Item must be defined');
         }
@@ -37,6 +41,7 @@ var TreeviewItem = /** @class */ (function () {
                 if (_this.disabled === true) {
                     child.disabled = true;
                 }
+                child.parent = _this;
                 return new TreeviewItem(child);
             });
         }
@@ -48,6 +53,9 @@ var TreeviewItem = /** @class */ (function () {
         }
         if (item.parent) {
             this.parent = item.parent;
+        }
+        else {
+            roots.push(this);
         }
     }
     Object.defineProperty(TreeviewItem.prototype, "checked", {
@@ -84,6 +92,18 @@ var TreeviewItem = /** @class */ (function () {
         },
         set: function (value) {
             this.internalEdit = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TreeviewItem.prototype, "created", {
+        get: function () {
+            return this.internalCreated;
+        },
+        set: function (value) {
+            if (!value) {
+                this.internalCreated = false;
+            }
         },
         enumerable: true,
         configurable: true
@@ -159,6 +179,27 @@ var TreeviewItem = /** @class */ (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(TreeviewItem.prototype, "selected", {
+        get: function () {
+            return this.internalSelected;
+        },
+        set: function (value) {
+            this.dropSelection();
+            this.internalSelected = value;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TreeviewItem.prototype, "active", {
+        get: function () {
+            return this.internalActive;
+        },
+        set: function (val) {
+            this.internalActive = val;
+        },
+        enumerable: true,
+        configurable: true
+    });
     TreeviewItem.prototype.getSelection = function () {
         var checkedItems = [];
         var uncheckedItems = [];
@@ -202,6 +243,32 @@ var TreeviewItem = /** @class */ (function () {
             this.internalChildren.push(newItem);
         }
     };
+    TreeviewItem.prototype.getBrother = function (step) {
+        if (this.parent) {
+            return this._getNeighbour(step, this.parent.children);
+        }
+        else {
+            return this._getNeighbour(step, roots);
+        }
+    };
+    TreeviewItem.prototype.getParent = function (step) {
+        if (step === 1) {
+            return this.children && this.children[0];
+        }
+        else {
+            return this.parent;
+        }
+    };
+    TreeviewItem.prototype._getNeighbour = function (step, items) {
+        var _this = this;
+        if (items) {
+            var myIdx_1 = items.findIndex(function (item) { return item === _this; });
+            return items.find(function (_item, idx) { return idx - step === myIdx_1; });
+        }
+        else {
+            return null;
+        }
+    };
     TreeviewItem.prototype.getCorrectChecked = function () {
         var checked = null;
         if (!isNil(this.internalChildren)) {
@@ -221,6 +288,17 @@ var TreeviewItem = /** @class */ (function () {
             checked = this.checked;
         }
         return checked;
+    };
+    TreeviewItem.prototype.dropSelection = function () {
+        var rootNode = this;
+        var subDrop = function (item) {
+            item.internalSelected = false;
+            if (item.internalChildren) {
+                item.internalChildren.forEach(function (chld) { return subDrop(chld); });
+            }
+        };
+        subDrop(rootNode);
+        roots.forEach(function (root) { return subDrop(root); });
     };
     return TreeviewItem;
 }());

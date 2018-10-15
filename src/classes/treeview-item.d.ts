@@ -19,8 +19,12 @@ export declare class TreeviewItem {
     private internalChecked;
     private internalCollapsed;
     private internalEdit;
+    private internalCreated;
     private isRoot;
     private internalChildren;
+    private internalSelected;
+    private internalActive;
+    editText: string;
     text: string;
     value: any;
     constructor(item: TreeItem, autoCorrectChecked?: boolean);
@@ -28,13 +32,20 @@ export declare class TreeviewItem {
     readonly isRootItem: Boolean;
     readonly indeterminate: boolean;
     edit: boolean;
+    created: boolean;
     setCheckedRecursive(value: boolean): void;
     disabled: boolean;
     collapsed: boolean;
     setCollapsedRecursive(value: boolean): void;
     children: TreeviewItem[];
+    selected: boolean;
+    active: boolean;
     getSelection(): TreeviewSelection;
     correctChecked(): void;
     addChildItem(): void;
-    private getCorrectChecked();
+    getBrother(step: -1 | 1): TreeviewItem;
+    getParent(step: -1 | 1): TreeviewItem;
+    private _getNeighbour;
+    private getCorrectChecked;
+    private dropSelection;
 }
